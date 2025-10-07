@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  certs:
+    image: rkolo/message-generator
+    container_name: message-generator
+    logging:
+      driver: journald # <-- Use the journald driver
+      options:
+        tag: "message-generator-log" # <-- A specific tag to easily identify logs
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: fluentbit
+    restart: always
+    user: root # Necessary for file permission access to the journal files
+    volumes:
+      # 1. Mount the Configuration File
+      - ./fluentbit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      
+      # 2. MOUNT THE JOURNAL DIRECTORY (FOR LOGS)
+      - /var/log/journal:/var/log/journal:ro 
+      
+      # 3. MOUNT THE MACHINE ID FILE (FOR IDENTIFICATION)
+      - /etc/machine-id:/etc/machine-id:ro 
+
+      # 4. MOUNT CERTIFACETES NEEDED FOR SSL
+      - ./certs:/fluent-bit/certs:ro
+          
+    #command: /fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf
+
